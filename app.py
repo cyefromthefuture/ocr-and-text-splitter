@@ -4,6 +4,7 @@ import re
 import io
 import xlsxwriter
 import datetime
+import time
 from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
 
@@ -15,7 +16,112 @@ except ImportError:
     SPELLCHECK_AVAILABLE = False
 
 # --- CONFIGURATION ---
-st.set_page_config(page_title="Manifest Master", layout="wide")
+st.set_page_config(page_title="Manifest Master", layout="wide", page_icon="🚢")
+
+# --- CUSTOM CSS & ANIMATION ---
+def inject_custom_css():
+    st.markdown("""
+        <style>
+        /* 1. ANIMATED OCEAN BACKGROUND */
+        .stApp {
+            background: linear-gradient(-45deg, #021B79, #0575E6, #00F260, #0575E6);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            color: white;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 2. GLASSMORPHISM CONTAINERS */
+        .stDataFrame, .stTable, div[data-testid="stFileUploader"] {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* 3. HEADERS */
+        h1, h2, h3 {
+            color: #FFFFFF !important;
+            text-shadow: 2px 2px 4px #000000;
+        }
+        p, label {
+            color: #E0E0E0 !important;
+            font-weight: 500;
+        }
+
+        /* 4. BUTTONS */
+        .stButton>button {
+            background-color: #FF4B4B;
+            color: white;
+            border-radius: 20px;
+            border: none;
+            padding: 10px 24px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .stButton>button:hover {
+            transform: scale(1.05);
+            background-color: #FF2B2B;
+            box-shadow: 0px 0px 15px rgba(255, 75, 75, 0.7);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+# --- CUSTOM SHIPPING LOADER ---
+def shipping_loader():
+    """Returns the HTML for a shipping animation"""
+    return """
+    <div style="display: flex; justify-content: center; align-items: center; margin: 20px 0;">
+        <div class="loader">
+            <style>
+                .loader {
+                    width: 100px;
+                    height: 100px;
+                    position: relative;
+                }
+                .ship {
+                    font-size: 50px;
+                    position: absolute;
+                    bottom: 20px;
+                    left: 20px;
+                    animation: sail 2s infinite ease-in-out;
+                }
+                .wave {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 10px;
+                    background: rgba(255,255,255,0.6);
+                    border-radius: 10px;
+                    animation: wave 1s infinite linear;
+                }
+                @keyframes sail {
+                    0%, 100% { transform: rotate(0deg) translateY(0); }
+                    25% { transform: rotate(5deg) translateY(-5px); }
+                    75% { transform: rotate(-5deg) translateY(5px); }
+                }
+                @keyframes wave {
+                    0% { transform: translateX(-5px); }
+                    50% { transform: translateX(5px); }
+                    100% { transform: translateX(-5px); }
+                }
+            </style>
+            <div class="ship">🚢</div>
+            <div class="wave"></div>
+        </div>
+        <h3 style="margin-left: 20px;">Processing Manifest...</h3>
+    </div>
+    """
+
+# Initialize CSS
+inject_custom_css()
+
 st.title("🚢 Manifest Validator & Converter")
 
 # --- SESSION STATE ---
@@ -25,7 +131,7 @@ if 'run_clicked' not in st.session_state:
     st.session_state.run_clicked = False
 
 # --- 1. SETUP ONLINE CHECKER ---
-geolocator = Nominatim(user_agent="my_logistics_checker_v12")
+geolocator = Nominatim(user_agent="my_logistics_checker_v13")
 geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
 
 COUNTRY_ALIASES = {
@@ -132,7 +238,8 @@ def validate_data(df, use_internet):
 
     location_issues = {}
     if use_internet and len(df.columns) > 15:
-        with st.spinner("🌍 Verifying locations online..."):
+        with st.empty():
+            st.markdown(shipping_loader(), unsafe_allow_html=True) # SHOW ANIMATION
             try:
                 unique_pairs = df.iloc[:, [13, 15]].drop_duplicates().values
                 for cntry, dest in unique_pairs:
@@ -206,7 +313,7 @@ def validate_data(df, use_internet):
 
     return errors, potential_typos
 
-# --- 4. CONVERSION ENGINE (With New Logic) ---
+# --- 4. CONVERSION ENGINE ---
 def convert_to_template(df, header_info, logo_bytes):
     output = io.BytesIO()
     workbook = xlsxwriter.Workbook(output, {'in_memory': True, 'nan_inf_to_errors': True})
@@ -234,41 +341,34 @@ def convert_to_template(df, header_info, logo_bytes):
          if hasattr(int_loc, '__iter__'): int_loc = int_loc[0]
          df_clean = df_clean.iloc[:int_loc]
 
-    if len(df_clean.columns) < 9: # Need at least B/L column (Index 8)
+    if len(df_clean.columns) < 9: 
         return None
 
-    # --- 2. DETERMINE SHEET GROUPS ---
-    # Logic: 
-    # - If B/L is "#N/A", "IN CY", or a Date -> Use Owner (Col G / Idx 6)
-    # - Otherwise -> Use B/L (Col I / Idx 8)
-    
+    # --- 2. SMART GROUPING LOGIC ---
+    # Case 1: Valid B/L -> Group by B/L
+    # Case 2: Invalid B/L (#N/A, IN CY, Date) -> Group by Owner
     def get_sheet_group(row):
         owner = str(row.iloc[6]).strip()
         bl_val = row.iloc[8]
         
-        # Safe string conversion
+        # Check null/empty
         if pd.isna(bl_val):
-            bl_str = ""
-        else:
-            bl_str = str(bl_val).strip().upper()
-            
-        # Condition 1: Invalid/Special Keywords
-        if not bl_str or bl_str in ["#N/A", "IN CY", "NAN", ""]:
             return owner
             
-        # Condition 2: Date Detection
-        # Check if it looks like a date string (basic check) or is a datetime object
+        bl_str = str(bl_val).strip().upper()
+        
+        # Keyword checks
+        if bl_str in ["#N/A", "IN CY", "NAN", ""]:
+            return owner
+            
+        # Date checks
         if isinstance(bl_val, (datetime.datetime, datetime.date, pd.Timestamp)):
             return owner
-        
-        # Check for strings that Excel might have formatted as dates (e.g., contains timestamp)
-        if "00:00:00" in bl_str:
+        if "00:00:00" in bl_str: # String timestamp format
             return owner
             
-        # Otherwise, use B/L Number
-        return bl_str
+        return bl_str # Return B/L No
 
-    # Apply grouping logic
     df_clean['_SheetGroup'] = df_clean.apply(get_sheet_group, axis=1)
     unique_groups = df_clean['_SheetGroup'].unique()
 
@@ -281,19 +381,18 @@ def convert_to_template(df, header_info, logo_bytes):
         return ""
 
     for group_name in unique_groups:
-        # Sanitize sheet name
         sheet_name = str(group_name).replace("/", "-").replace("\\", "-").replace("?", "").replace("*", "").replace("[", "").replace("]", "").replace(":", "")[:30]
         ws = workbook.add_worksheet(sheet_name)
         
-        ws.set_column('A:A', 5)   # Seq
-        ws.set_column('B:B', 15)  # Container
-        ws.set_column('C:C', 6)   # Size
-        ws.set_column('D:D', 15)  # Seal
-        ws.set_column('E:G', 6)   # Bill, OPR, Type
-        ws.set_column('H:H', 10)  # VGM
-        ws.set_column('I:I', 10)  # Weight
-        ws.set_column('J:J', 6)   # PKGS
-        ws.set_column('K:N', 10)  # Others
+        ws.set_column('A:A', 5)
+        ws.set_column('B:B', 15)
+        ws.set_column('C:C', 6)
+        ws.set_column('D:D', 15)
+        ws.set_column('E:G', 6)
+        ws.set_column('H:H', 10)
+        ws.set_column('I:I', 10)
+        ws.set_column('J:J', 6)
+        ws.set_column('K:N', 10)
 
         if logo_bytes:
             ws.insert_image('A1', 'logo.png', {'image_data': logo_bytes, 'x_scale': 0.8, 'y_scale': 0.8, 'x_offset': 5, 'y_offset': 5})
@@ -319,7 +418,6 @@ def convert_to_template(df, header_info, logo_bytes):
         for col, txt in enumerate(headers):
             ws.write(9, col, txt, fmt_table_header)
 
-        # Filter by Group
         group_data = df_clean[df_clean['_SheetGroup'] == group_name]
         
         row_idx = 10
@@ -333,8 +431,8 @@ def convert_to_template(df, header_info, logo_bytes):
             except: w_val = 0
             total_weight += w_val
             
-            # --- SEQ IS NOW AUTO-INCREMENT ---
-            ws.write(row_idx, 0, seq_counter, fmt_data_center) 
+            # Use Auto-Increment SEQ
+            ws.write(row_idx, 0, seq_counter, fmt_data_center)
             seq_counter += 1
             
             ws.write(row_idx, 1, clean_val(get_val(row, 2)), fmt_data_center) 
@@ -437,8 +535,11 @@ if uploaded_file:
             
             st.divider()
 
-            # 4. RUN VALIDATION
-            errors, typos = validate_data(df, enable_internet)
+            # 4. RUN VALIDATION (WITH ANIMATION)
+            with st.empty():
+                st.markdown(shipping_loader(), unsafe_allow_html=True) # SHOW ANIMATION
+                time.sleep(1.5) # Fake delay for effect
+                errors, typos = validate_data(df, enable_internet)
             
             # 5. SPELLING UI
             unchecked_typos_as_errors = []
