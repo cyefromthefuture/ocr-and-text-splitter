@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR & Column Splitter</title>
+    <link rel="stylesheet" href="style.css">
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+</head>
+<body>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('ocr')">📷 Image to Text</button>
+            <button class="tab-btn" onclick="switchTab('split')">✂️ Split Columns</button>
+        </div>
+
+        <div id="ocrSection" class="tab-content active">
+            <header>
+                <h2>Image to Text</h2>
+                <p>Upload an image to extract text.</p>
+            </header>
+
+            <div class="input-section">
+                <input type="file" id="imageInput" accept="image/*">
+                <label for="imageInput" class="upload-btn">📂 Choose Image</label>
+            </div>
+
+            <div class="preview-section">
+                <img id="imagePreview" alt="Image Preview" style="display:none;">
+            </div>
+
+            <button id="convertBtn" disabled>Extract Text</button>
+            
+            <div class="loading-bar" id="loadingBar" style="display:none;">
+                <div class="progress" id="progressBar"></div>
+            </div>
+            <p id="statusText"></p>
+
+            <div class="result-section" id="ocrResultContainer" style="display:none;">
+                <h3>Extracted Text:</h3>
+                <textarea id="ocrResultText" readonly></textarea>
+                <button id="copyOcrBtn" class="copy-btn">📋 Copy Result</button>
+            </div>
+        </div>
+
+        <div id="splitSection" class="tab-content" style="display:none;">
+            <header>
+                <h2>Split into Columns</h2>
+                <p>Paste your 2-column data below.</p>
+            </header>
+
+            <textarea id="splitInput" placeholder="Paste here...&#10;TCLU7175138 20DV&#10;NYKU3771675 20DV"></textarea>
+            
+            <button id="splitBtn">✂️ Split into 2 Columns</button>
+
+            <div class="result-section" id="splitResultContainer" style="display:none;">
+                
+                <div class="columns-wrapper">
+                    <div class="column-box">
+                        <h3>Column 1</h3>
+                        <textarea id="col1Text" readonly></textarea>
+                        <button onclick="copyToClipboard('col1Text', this)" class="copy-btn-small">Copy Col 1</button>
+                    </div>
+
+                    <div class="column-box">
+                        <h3>Column 2</h3>
+                        <textarea id="col2Text" readonly></textarea>
+                        <button onclick="copyToClipboard('col2Text', this)" class="copy-btn-small">Copy Col 2</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
