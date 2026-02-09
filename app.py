@@ -18,120 +18,14 @@ except ImportError:
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Manifest Master", layout="wide", page_icon="🚢")
 
-# --- CUSTOM CSS & ANIMATION ---
-def inject_custom_css():
-    st.markdown("""
-        <style>
-        /* 1. ANIMATED OCEAN BACKGROUND */
-        .stApp {
-            background: linear-gradient(-45deg, #021B79, #0575E6, #00F260, #0575E6);
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
-            color: white;
-        }
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* 2. GLASSMORPHISM CONTAINERS */
-        .stDataFrame, .stTable, div[data-testid="stFileUploader"] {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        /* 3. HEADERS */
-        h1, h2, h3 {
-            color: #FFFFFF !important;
-            text-shadow: 2px 2px 4px #000000;
-        }
-        p, label {
-            color: #E0E0E0 !important;
-            font-weight: 500;
-        }
-
-        /* 4. BUTTONS */
-        .stButton>button {
-            background-color: #FF4B4B;
-            color: white;
-            border-radius: 20px;
-            border: none;
-            padding: 10px 24px;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        .stButton>button:hover {
-            transform: scale(1.05);
-            background-color: #FF2B2B;
-            box-shadow: 0px 0px 15px rgba(255, 75, 75, 0.7);
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-# --- CUSTOM SHIPPING LOADER ---
-def shipping_loader():
-    """Returns the HTML for a shipping animation"""
-    return """
-    <div style="display: flex; justify-content: center; align-items: center; margin: 20px 0;">
-        <div class="loader">
-            <style>
-                .loader {
-                    width: 100px;
-                    height: 100px;
-                    position: relative;
-                }
-                .ship {
-                    font-size: 50px;
-                    position: absolute;
-                    bottom: 20px;
-                    left: 20px;
-                    animation: sail 2s infinite ease-in-out;
-                }
-                .wave {
-                    position: absolute;
-                    bottom: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 10px;
-                    background: rgba(255,255,255,0.6);
-                    border-radius: 10px;
-                    animation: wave 1s infinite linear;
-                }
-                @keyframes sail {
-                    0%, 100% { transform: rotate(0deg) translateY(0); }
-                    25% { transform: rotate(5deg) translateY(-5px); }
-                    75% { transform: rotate(-5deg) translateY(5px); }
-                }
-                @keyframes wave {
-                    0% { transform: translateX(-5px); }
-                    50% { transform: translateX(5px); }
-                    100% { transform: translateX(-5px); }
-                }
-            </style>
-            <div class="ship">🚢</div>
-            <div class="wave"></div>
-        </div>
-        <h3 style="margin-left: 20px;">Processing Manifest...</h3>
-    </div>
-    """
-
-# Initialize CSS
-inject_custom_css()
-
-st.title("🚢 Manifest Validator & Converter")
-
-# --- SESSION STATE ---
+# --- SESSION STATE INITIALIZATION ---
 if 'verified_words' not in st.session_state:
     st.session_state.verified_words = set()
 if 'run_clicked' not in st.session_state:
     st.session_state.run_clicked = False
 
 # --- 1. SETUP ONLINE CHECKER ---
-geolocator = Nominatim(user_agent="my_logistics_checker_v13")
+geolocator = Nominatim(user_agent="my_logistics_checker_cool_v1")
 geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
 
 COUNTRY_ALIASES = {
@@ -196,6 +90,105 @@ if SPELLCHECK_AVAILABLE:
     ]
     spell.word_frequency.load_words(LOGISTICS_WORDS)
 
+# --- 3. CUSTOM CSS (GEMINI VIBE) ---
+def inject_custom_css():
+    st.markdown("""
+        <style>
+        /* 1. BACKGROUND: Deep Charcoal */
+        .stApp {
+            background-color: #131314;
+            color: #E3E3E3;
+        }
+        
+        /* 2. CARDS: Soft Dark Grey */
+        .stDataFrame, .stTable, div[data-testid="stFileUploader"], div[class*="stMetric"] {
+            background-color: #1E1F20;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #333;
+            box-shadow: none;
+        }
+        
+        /* 3. HEADERS: Gradient Text */
+        h1, h2, h3 {
+            background: linear-gradient(90deg, #4285F4, #9B72CB, #D96570);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'Google Sans', sans-serif;
+            font-weight: 700;
+        }
+        
+        /* 4. TEXT & LABELS */
+        h4, h5, p, label, li, .stMarkdown {
+            color: #E3E3E3 !important;
+            font-family: 'Google Sans', sans-serif;
+        }
+        
+        /* 5. BUTTONS: Gradient Sparkle */
+        .stButton>button {
+            background: linear-gradient(135deg, #1c7ef0, #a855f7, #ec4899);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 24px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+        .stButton>button:hover {
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+            transform: scale(1.02);
+        }
+        
+        /* 6. UPLOADER STYLING */
+        div[data-testid="stFileUploader"] {
+            border: 2px dashed #555;
+        }
+        div[data-testid="stFileUploader"]:hover {
+            border-color: #a855f7;
+        }
+
+        /* 7. METRICS */
+        div[data-testid="stMetricValue"] {
+            color: #FFFFFF !important;
+            font-size: 24px !important;
+        }
+        div[data-testid="stMetricLabel"] {
+            color: #AAAAAA !important;
+        }
+        
+        /* 8. ALERTS */
+        .stAlert {
+            background-color: #1E1F20;
+            color: #E3E3E3;
+            border: 1px solid #444;
+            border-radius: 12px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+def shipping_loader():
+    return """
+    <div style="text-align: center; margin: 40px 0;">
+        <div style="font-size: 60px; display: inline-block; animation: float 3s ease-in-out infinite; filter: drop-shadow(0 0 10px #4285F4);">
+            🚢
+        </div>
+        <h4 style="margin-top: 15px; background: linear-gradient(90deg, #4285F4, #D96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            Analyzing Manifest Data...
+        </h4>
+        <style>
+            @keyframes float {
+                0% { transform: translateY(0px); }
+                50% { transform: translateY(-10px); }
+                100% { transform: translateY(0px); }
+            }
+        </style>
+    </div>
+    """
+
+inject_custom_css()
+
+# --- 4. VALIDATION LOGIC ---
 @st.cache_data
 def check_location_online(destination, expected_country):
     try:
@@ -221,14 +214,68 @@ def is_port_code_match(dest, country):
             if ISO_MAPPING[clean_country] == prefix: return True
     return False
 
-# --- 3. VALIDATION ENGINE ---
+def determine_grouping(row):
+    owner = str(row.iloc[6]).strip()
+    bl_val = row.iloc[8]
+    if pd.isna(bl_val): return owner, "Owner"
+    bl_str = str(bl_val).strip().upper()
+    if bl_str in ["#N/A", "IN CY", "NAN", ""]: return owner, "Owner"
+    if isinstance(bl_val, (datetime.datetime, datetime.date, pd.Timestamp)): return owner, "Owner"
+    if "00:00:00" in bl_str: return owner, "Owner"
+    return bl_str, "B/L No"
+
+def calculate_summary(df):
+    """Calculates sums for Count, TEUs, Weight, VGM"""
+    df_calc = df.copy()
+    
+    # Cleanup to stop at Total
+    total_idx = None
+    for idx, row in df_calc.iterrows():
+        check_vals = [str(row.iloc[i]).upper() for i in range(min(3, len(row)))]
+        if any("TOTAL" in v for v in check_vals):
+            total_idx = idx
+            break
+    if total_idx is not None and total_idx in df_calc.index:
+         int_loc = df_calc.index.get_loc(total_idx)
+         if isinstance(int_loc, slice): int_loc = int_loc.start
+         if hasattr(int_loc, '__iter__'): int_loc = int_loc[0]
+         df_calc = df_calc.iloc[:int_loc]
+         
+    # TEU Logic
+    def get_teu(val):
+        s = str(val).strip()
+        if '20' in s: return 1
+        if '40' in s: return 2
+        if '45' in s: return 2
+        return 0 
+    
+    total_cnt = len(df_calc)
+    total_teus = df_calc.iloc[:, 3].apply(get_teu).sum()
+    
+    try: total_wgt = pd.to_numeric(df_calc.iloc[:, 11], errors='coerce').sum()
+    except: total_wgt = 0
+    
+    try: total_vgm = pd.to_numeric(df_calc.iloc[:, 20], errors='coerce').sum()
+    except: total_vgm = 0
+    
+    return total_cnt, total_teus, total_wgt, total_vgm
+
 def validate_data(df, use_internet):
     errors = []
     potential_typos = set()
+    checks_passed = {
+        "Container (Col C)": "Pending",
+        "Seals (Col F)": "Pending",
+        "PKG (Col K)": "Pending",
+        "VGM vs Weight": "Pending",
+        "Location": "Pending",
+        "Description (Col M)": "Pending"
+    }
     
-    if len(df.columns) < 5:
-        errors.append({"Ref (Col B)": "CRITICAL", "Column": "Structure", "Error": f"Columns missing. Found only {len(df.columns)} columns. Header detection failed."})
-        return errors, potential_typos
+    if len(df.columns) < 13:
+        errors.append({"Ref (Col B)": "CRITICAL", "Column": "Structure", "Error": f"Columns missing. Found only {len(df.columns)} columns."})
+        checks_passed["Structure"] = "❌ Failed"
+        return errors, potential_typos, checks_passed
 
     duplicate_seals_list = []
     if len(df.columns) > 5:
@@ -238,20 +285,25 @@ def validate_data(df, use_internet):
 
     location_issues = {}
     if use_internet and len(df.columns) > 15:
-        with st.empty():
-            st.markdown(shipping_loader(), unsafe_allow_html=True) # SHOW ANIMATION
-            try:
-                unique_pairs = df.iloc[:, [13, 15]].drop_duplicates().values
-                for cntry, dest in unique_pairs:
-                    if "TOTAL" in str(cntry).upper() or "TOTAL" in str(dest).upper(): continue
-                    if pd.notna(cntry) and pd.notna(dest):
-                        if is_port_code_match(dest, cntry): continue
-                        is_valid, msg = check_location_online(str(dest), str(cntry))
-                        if not is_valid: location_issues[(str(cntry), str(dest))] = msg
-            except: pass
+        try:
+            unique_pairs = df.iloc[:, [13, 15]].drop_duplicates().values
+            for cntry, dest in unique_pairs:
+                if "TOTAL" in str(cntry).upper() or "TOTAL" in str(dest).upper(): continue
+                if pd.notna(cntry) and pd.notna(dest):
+                    if is_port_code_match(dest, cntry): continue
+                    is_valid, msg = check_location_online(str(dest), str(cntry))
+                    if not is_valid: location_issues[(str(cntry), str(dest))] = msg
+        except: pass
 
     num_cols = len(df.columns)
     
+    has_cont_error = False
+    has_seal_error = False
+    has_pkg_error = False
+    has_vgm_error = False
+    has_loc_error = False
+    has_desc_error = False
+
     for index, row in df.iterrows():
         def get_val(col_idx):
             if col_idx < num_cols: return row.iloc[col_idx]
@@ -269,24 +321,33 @@ def validate_data(df, use_internet):
         cont = get_val(2)
         if pd.notna(cont) and str(cont).strip() != "":
             if not re.match(r'^[A-Z]{4}\d{7}$', str(cont).strip().upper()):
-                log("C (Container)", "Invalid format (Must be 4 Letters + 7 Digits)")
+                log("C (Container)", "Invalid format")
+                has_cont_error = True
 
         seal = get_val(5)
         if pd.notna(seal) and str(seal).strip() != "":
-            if str(seal).strip() in duplicate_seals_list: log("F (Seal)", "Duplicate Seal Number found")
+            if str(seal).strip() in duplicate_seals_list: 
+                log("F (Seal)", "Duplicate Seal")
+                has_seal_error = True
 
         pkg = get_val(10)
         if pd.notna(pkg) and str(pkg).strip() != "":
             try:
                 val = float(pkg)
-                if val % 1 != 0: log("K (PKG)", f"Value '{pkg}' has decimals. Must be an Integer.")
-            except ValueError: log("K (PKG)", "Not a valid number")
+                if val % 1 != 0: 
+                    log("K (PKG)", "Decimal found")
+                    has_pkg_error = True
+            except ValueError: 
+                log("K (PKG)", "Not a number")
+                has_pkg_error = True
 
         vgm = get_val(20)
         wgt = get_val(11)
         if pd.notna(vgm) and pd.notna(wgt):
             try:
-                if float(vgm) <= float(wgt): log("U (VGM)", f"VGM ({vgm}) must be > Weight ({wgt})")
+                if float(vgm) <= float(wgt): 
+                    log("U (VGM)", f"VGM ({vgm}) <= Wgt ({wgt})")
+                    has_vgm_error = True
             except: pass
             
         country = get_val(13)
@@ -295,10 +356,13 @@ def validate_data(df, use_internet):
              c_str, d_str = str(country), str(dest)
              if is_port_code_match(d_str, c_str): pass
              elif use_internet:
-                 if (c_str, d_str) in location_issues: log("N vs P", location_issues[(c_str, d_str)])
+                 if (c_str, d_str) in location_issues: 
+                     log("N vs P", location_issues[(c_str, d_str)])
+                     has_loc_error = True
              elif not use_internet:
                  if c_str.upper() not in d_str.upper() and d_str.upper() not in c_str.upper():
-                     log("N vs P", f"Check Country '{c_str}' vs Dest '{d_str}'")
+                     log("N vs P", f"Check '{c_str}' vs '{d_str}'")
+                     has_loc_error = True
 
         if SPELLCHECK_AVAILABLE:
             desc = get_val(12)
@@ -309,11 +373,48 @@ def validate_data(df, use_internet):
                     words = clean_text.split()
                     misspelled = spell.unknown(words)
                     for w in misspelled:
-                        if len(w) > 2: potential_typos.add(w.upper())
+                        if len(w) > 2: 
+                            potential_typos.add(w.upper())
+                            has_desc_error = True
 
-    return errors, potential_typos
+    checks_passed["Container (Col C)"] = "❌ Failed" if has_cont_error else "✅ OK"
+    checks_passed["Seals (Col F)"] = "❌ Failed" if has_seal_error else "✅ OK"
+    checks_passed["PKG (Col K)"] = "❌ Failed" if has_pkg_error else "✅ OK"
+    checks_passed["VGM vs Weight"] = "❌ Failed" if has_vgm_error else "✅ OK"
+    checks_passed["Location"] = "❌ Failed" if has_loc_error else "✅ OK"
+    checks_passed["Description (Col M)"] = "⚠️ Review" if has_desc_error else "✅ OK"
 
-# --- 4. CONVERSION ENGINE ---
+    return errors, potential_typos, checks_passed
+
+# --- 5. BREAKDOWN & CONVERSION ---
+def generate_breakdown(df):
+    df_temp = df.copy()
+    total_idx = None
+    for idx, row in df_temp.iterrows():
+        check_vals = [str(row.iloc[i]).upper() for i in range(min(3, len(row)))]
+        if any("TOTAL" in v for v in check_vals):
+            total_idx = idx
+            break
+    if total_idx is not None and total_idx in df_temp.index:
+         int_loc = df_temp.index.get_loc(total_idx)
+         if isinstance(int_loc, slice): int_loc = int_loc.start
+         if hasattr(int_loc, '__iter__'): int_loc = int_loc[0]
+         df_temp = df_temp.iloc[:int_loc]
+
+    df_temp['GroupName'], df_temp['GroupType'] = zip(*df_temp.apply(determine_grouping, axis=1))
+    
+    stats = []
+    for (name, g_type), group in df_temp.groupby(['GroupName', 'GroupType']):
+        try: w_sum = pd.to_numeric(group.iloc[:, 11], errors='coerce').sum()
+        except: w_sum = 0
+        stats.append({
+            "Sheet Name": name,
+            "Grouped By": g_type,
+            "Containers": len(group),
+            "Total Weight": f"{w_sum:,.2f}"
+        })
+    return pd.DataFrame(stats)
+
 def convert_to_template(df, header_info, logo_bytes):
     output = io.BytesIO()
     workbook = xlsxwriter.Workbook(output, {'in_memory': True, 'nan_inf_to_errors': True})
@@ -326,7 +427,6 @@ def convert_to_template(df, header_info, logo_bytes):
     fmt_data_left   = workbook.add_format({'font_name': font_name, 'font_size': 11, 'border': 1, 'align': 'left'})
     fmt_data_bold   = workbook.add_format({'font_name': font_name, 'font_size': 11, 'border': 1, 'bold': True, 'align': 'center'})
 
-    # 1. Clean Data & Slice at TOTAL
     df_clean = df.copy()
     total_idx = None
     for idx, row in df_clean.iterrows():
@@ -334,43 +434,16 @@ def convert_to_template(df, header_info, logo_bytes):
         if any("TOTAL" in v for v in check_vals):
             total_idx = idx
             break
-    
     if total_idx is not None and total_idx in df_clean.index:
          int_loc = df_clean.index.get_loc(total_idx)
          if isinstance(int_loc, slice): int_loc = int_loc.start
          if hasattr(int_loc, '__iter__'): int_loc = int_loc[0]
          df_clean = df_clean.iloc[:int_loc]
 
-    if len(df_clean.columns) < 9: 
-        return None
+    if len(df_clean.columns) < 9: return None
 
-    # --- 2. SMART GROUPING LOGIC ---
-    # Case 1: Valid B/L -> Group by B/L
-    # Case 2: Invalid B/L (#N/A, IN CY, Date) -> Group by Owner
-    def get_sheet_group(row):
-        owner = str(row.iloc[6]).strip()
-        bl_val = row.iloc[8]
-        
-        # Check null/empty
-        if pd.isna(bl_val):
-            return owner
-            
-        bl_str = str(bl_val).strip().upper()
-        
-        # Keyword checks
-        if bl_str in ["#N/A", "IN CY", "NAN", ""]:
-            return owner
-            
-        # Date checks
-        if isinstance(bl_val, (datetime.datetime, datetime.date, pd.Timestamp)):
-            return owner
-        if "00:00:00" in bl_str: # String timestamp format
-            return owner
-            
-        return bl_str # Return B/L No
-
-    df_clean['_SheetGroup'] = df_clean.apply(get_sheet_group, axis=1)
-    unique_groups = df_clean['_SheetGroup'].unique()
+    df_clean['GroupName'], df_clean['GroupType'] = zip(*df_clean.apply(determine_grouping, axis=1))
+    unique_groups = df_clean['GroupName'].unique()
 
     def clean_val(val):
         if pd.isna(val) or str(val).lower() == 'nan': return ""
@@ -394,8 +467,10 @@ def convert_to_template(df, header_info, logo_bytes):
         ws.set_column('J:J', 6)
         ws.set_column('K:N', 10)
 
-        if logo_bytes:
-            ws.insert_image('A1', 'logo.png', {'image_data': logo_bytes, 'x_scale': 0.8, 'y_scale': 0.8, 'x_offset': 5, 'y_offset': 5})
+        if logo_bytes is not None:
+            try:
+                ws.insert_image('A1', 'logo.png', {'image_data': logo_bytes, 'x_scale': 0.8, 'y_scale': 0.8, 'x_offset': 5, 'y_offset': 5})
+            except: pass 
 
         ws.write('C1', "CÔNG TY CP TÂN CẢNG CYPRESS", fmt_bold_left)
         ws.write('C2', "Cat Lai port, Nguyen Thi Dinh st, Dist. 2, Ho Chi Minh City.", fmt_bold_left)
@@ -418,11 +493,10 @@ def convert_to_template(df, header_info, logo_bytes):
         for col, txt in enumerate(headers):
             ws.write(9, col, txt, fmt_table_header)
 
-        group_data = df_clean[df_clean['_SheetGroup'] == group_name]
-        
+        group_data = df_clean[df_clean['GroupName'] == group_name]
         row_idx = 10
         total_weight = 0
-        seq_counter = 1 # RESET SEQ FOR EACH SHEET
+        seq_counter = 1
 
         for _, row in group_data.iterrows():
             try: 
@@ -431,10 +505,8 @@ def convert_to_template(df, header_info, logo_bytes):
             except: w_val = 0
             total_weight += w_val
             
-            # Use Auto-Increment SEQ
-            ws.write(row_idx, 0, seq_counter, fmt_data_center)
+            ws.write(row_idx, 0, seq_counter, fmt_data_center) 
             seq_counter += 1
-            
             ws.write(row_idx, 1, clean_val(get_val(row, 2)), fmt_data_center) 
             ws.write(row_idx, 2, clean_val(get_val(row, 3)), fmt_data_center) 
             ws.write(row_idx, 3, clean_val(get_val(row, 5)), fmt_data_left)   
@@ -457,57 +529,59 @@ def convert_to_template(df, header_info, logo_bytes):
     output.seek(0)
     return output
 
-# --- UI LOGIC ---
+# --- 6. UI LOGIC ---
+st.title("✨ Manifest Master")
+st.markdown("### Intelligent Validation & Processing System")
+
 c1, c2 = st.columns([1, 1])
-uploaded_file = c1.file_uploader("1. Upload Loading List (Excel)", type=["xlsx", "xls"])
-logo_file = c2.file_uploader("2. Upload Logo (PNG/JPG)", type=["png", "jpg", "jpeg"])
-enable_internet = st.checkbox("Enable Internet Location Check", value=False)
+uploaded_file = c1.file_uploader("1. Upload Excel Manifest 📂", type=["xlsx", "xls"])
+logo_file = c2.file_uploader("2. Logo (Optional) 🖼️", type=["png", "jpg", "jpeg"])
+enable_internet = st.checkbox("Enable Deep Location Check (Slower) 🌐", value=False)
+
+if st.button("🔄 Reset / Check New File"):
+    st.session_state.run_clicked = False
+    st.session_state.verified_words = set()
+    st.rerun()
 
 if uploaded_file:
-    if st.button("Run Validation"):
+    if st.button("✨ Run Analysis"):
         st.session_state.run_clicked = True
     
     if st.session_state.run_clicked:
         try:
-            # 1. FIND CORRECT SHEET AND HEADER
+            # 1. READ RAW
             xls = pd.ExcelFile(uploaded_file)
             sheet_names = xls.sheet_names
-            
             valid_sheet_name = None
             detected_header_idx = None
             
             for sheet in sheet_names:
                 df_temp = pd.read_excel(uploaded_file, sheet_name=sheet, header=None, nrows=50)
-                
                 for idx, row in df_temp.iterrows():
                     row_str = " ".join([str(x) for x in row.values if pd.notna(x)]).upper()
-                    if "CONTAINER" in row_str and ("SEQ" in row_str or "BOOKING" in row_str or "SEAL" in row_str or "SIZE" in row_str):
+                    if "CONTAINER" in row_str and ("SEQ" in row_str or "BOOKING" in row_str or "SEAL" in row_str):
                         detected_header_idx = idx
                         valid_sheet_name = sheet
                         break
-                
-                if valid_sheet_name:
-                    break 
+                if valid_sheet_name: break 
             
             if valid_sheet_name is None:
-                st.error("Could not find a valid loading list in any sheet (looking for 'Container', 'Seal', etc).")
+                st.error("Could not find a valid loading list.")
                 st.stop()
 
-            # 2. READ REAL DATA
+            # 2. READ REAL
             uploaded_file.seek(0)
             df = pd.read_excel(uploaded_file, sheet_name=valid_sheet_name, header=detected_header_idx)
             df.columns = [str(c) if pd.notna(c) else f"Unnamed_{i}" for i, c in enumerate(df.columns)]
             
-            # 3. META INFO
+            # 3. META
             header_info = {'mv': '', 'voy': '', 'etd': ''}
             try:
                 if detected_header_idx > 0:
                     uploaded_file.seek(0)
                     df_meta = pd.read_excel(uploaded_file, sheet_name=valid_sheet_name, header=None, nrows=detected_header_idx)
-                    
                     for idx, row in df_meta.iterrows():
                         row_str = " ".join([str(x) for x in row.values if pd.notna(x)]).upper()
-                        
                         if "M/V" in row_str or "MV:" in row_str:
                             for i, val in enumerate(row.values):
                                 if pd.notna(val) and ("M/V" in str(val).upper() or "MV:" in str(val).upper()):
@@ -515,7 +589,6 @@ if uploaded_file:
                                         if i+offset < len(row) and pd.notna(row.iloc[i+offset]):
                                             header_info['mv'] = str(row.iloc[i+offset])
                                             break
-                        
                         if "VOY" in row_str:
                             for i, val in enumerate(row.values):
                                 if pd.notna(val) and "VOY" in str(val).upper():
@@ -523,7 +596,6 @@ if uploaded_file:
                                         if i+offset < len(row) and pd.notna(row.iloc[i+offset]):
                                             header_info['voy'] = str(row.iloc[i+offset])
                                             break
-
                         if "ETD" in row_str:
                             for i, val in enumerate(row.values):
                                 if pd.notna(val) and "ETD" in str(val).upper():
@@ -535,60 +607,84 @@ if uploaded_file:
             
             st.divider()
 
-            # 4. RUN VALIDATION (WITH ANIMATION)
-            with st.empty():
-                st.markdown(shipping_loader(), unsafe_allow_html=True) # SHOW ANIMATION
-                time.sleep(1.5) # Fake delay for effect
-                errors, typos = validate_data(df, enable_internet)
+            # 4. RUN VALIDATION
+            loader = st.empty()
+            with loader:
+                st.markdown(shipping_loader(), unsafe_allow_html=True)
+                errors, typos, checks_passed = validate_data(df, enable_internet)
+            loader.empty() # Clear Animation
             
-            # 5. SPELLING UI
+            # 5. NEW SUMMARY DASHBOARD
+            total_cnt, total_teus, total_wgt, total_vgm = calculate_summary(df)
+            
+            st.markdown("### 📊 Manifest Summary")
+            
+            def get_status(key, success_msg="Checked"):
+                return f"✅ {success_msg}" if "OK" in checks_passed.get(key, "") else "⚠️ Issues Found"
+            
+            # Key Metrics
+            st.info(f"**📦 Total {total_cnt} Cont = {total_teus} TEUs**")
+            
+            c1, c2 = st.columns(2)
+            with c1:
+                st.write(f"**🔒 Seals:** {get_status('Seals (Col F)', 'No Duplicated')}")
+                st.write(f"**📝 Description:** {get_status('Description (Col M)', 'Checked')}")
+                st.write(f"**📦 PKG:** {get_status('PKG (Col K)', 'Checked')}")
+                st.write(f"**🌍 Location:** {get_status('Location', 'Checked')}")
+            with c2:
+                st.write(f"**⚖️ Weight:** {total_wgt:,.2f} kgs")
+                st.write(f"**📏 VGM:** {total_vgm:,.2f} kgs")
+            
+            # 6. SPELLING UI
             unchecked_typos_as_errors = []
             if typos:
-                st.info("ℹ️ Spelling Review")
-                st.write("Unrecognized words found. Check box if correct.")
-                
+                st.warning("⚠️ Unrecognized Terminology Detected")
                 typo_list = sorted(list(typos))
                 editor_data = pd.DataFrame({
-                    "Word": typo_list,
-                    "Is Correct?": [word in st.session_state.verified_words for word in typo_list]
+                    "Term": typo_list,
+                    "Verified": [word in st.session_state.verified_words for word in typo_list]
                 })
-                
                 edited_df = st.data_editor(
                     editor_data, 
-                    column_config={"Is Correct?": st.column_config.CheckboxColumn(required=True)},
-                    disabled=["Word"],
+                    column_config={"Verified": st.column_config.CheckboxColumn(required=True)},
+                    disabled=["Term"],
                     hide_index=True,
                     key="spelling_editor"
                 )
-                
-                verified_now = set(edited_df[edited_df["Is Correct?"] == True]["Word"])
+                verified_now = set(edited_df[edited_df["Verified"] == True]["Term"])
                 st.session_state.verified_words.update(verified_now)
-                
-                unchecked_words = set(edited_df[edited_df["Is Correct?"] == False]["Word"])
+                unchecked_words = set(edited_df[edited_df["Verified"] == False]["Term"])
                 if unchecked_words:
                     for w in unchecked_words:
                         unchecked_typos_as_errors.append({
                             "Ref (Col B)": "Multiple", "Column": "M (Desc)", 
-                            "Error": f"Spelling Error: '{w}' (Unchecked)"
+                            "Error": f"Unknown Term: '{w}'"
                         })
 
             all_errors = errors + unchecked_typos_as_errors
             
             if all_errors:
-                st.error(f"❌ Validation Failed: {len(all_errors)} Errors.")
-                st.warning("Fix errors in Excel OR check spelling boxes.")
+                st.error(f"❌ Found {len(all_errors)} Issues")
                 st.table(pd.DataFrame(all_errors))
             else:
                 st.success("✅ All Checks Passed!")
-                logo_bytes = io.BytesIO(logo_file.read()) if logo_file else None
                 
+                # PREVIEW BREAKDOWN
+                st.markdown("### 📄 Sheet Breakdown")
+                try:
+                    stats_df = generate_breakdown(df)
+                    st.dataframe(stats_df, use_container_width=True)
+                except: pass
+
+                st.markdown("---")
+                logo_bytes = io.BytesIO(logo_file.read()) if logo_file else None
                 excel_data = convert_to_template(df, header_info, logo_bytes)
                 
                 if excel_data:
                     st.download_button(
-                        label="📥 Download UP_Converted.xlsx",
+                        label="📥 Download Processed Manifest",
                         data=excel_data,
-                        file_name="UP_Converted.xlsx",
+                        file_name="Processed_Manifest.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
                 else:
