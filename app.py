@@ -25,7 +25,7 @@ if 'run_clicked' not in st.session_state:
     st.session_state.run_clicked = False
 
 # --- 1. SETUP ONLINE CHECKER ---
-geolocator = Nominatim(user_agent="my_logistics_checker_cool_v1")
+geolocator = Nominatim(user_agent="my_logistics_checker_copy_v1")
 geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
 
 COUNTRY_ALIASES = {
@@ -164,6 +164,13 @@ def inject_custom_css():
             border: 1px solid #444;
             border-radius: 12px;
         }
+        
+        /* 9. CODE BLOCK (FOR COPY) */
+        .stCodeBlock {
+            background-color: #000000 !important;
+            border: 1px solid #333;
+            border-radius: 10px;
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -225,10 +232,8 @@ def determine_grouping(row):
     return bl_str, "B/L No"
 
 def calculate_summary(df):
-    """Calculates sums for Count, TEUs, Weight, VGM"""
     df_calc = df.copy()
     
-    # Cleanup to stop at Total
     total_idx = None
     for idx, row in df_calc.iterrows():
         check_vals = [str(row.iloc[i]).upper() for i in range(min(3, len(row)))]
@@ -241,7 +246,6 @@ def calculate_summary(df):
          if hasattr(int_loc, '__iter__'): int_loc = int_loc[0]
          df_calc = df_calc.iloc[:int_loc]
          
-    # TEU Logic
     def get_teu(val):
         s = str(val).strip()
         if '20' in s: return 1
@@ -254,7 +258,6 @@ def calculate_summary(df):
     
     try: total_wgt = pd.to_numeric(df_calc.iloc[:, 11], errors='coerce').sum()
     except: total_wgt = 0
-    
     try: total_vgm = pd.to_numeric(df_calc.iloc[:, 20], errors='coerce').sum()
     except: total_vgm = 0
     
@@ -296,7 +299,6 @@ def validate_data(df, use_internet):
         except: pass
 
     num_cols = len(df.columns)
-    
     has_cont_error = False
     has_seal_error = False
     has_pkg_error = False
@@ -407,11 +409,37 @@ def generate_breakdown(df):
     for (name, g_type), group in df_temp.groupby(['GroupName', 'GroupType']):
         try: w_sum = pd.to_numeric(group.iloc[:, 11], errors='coerce').sum()
         except: w_sum = 0
+        
+        try: pkg_sum = pd.to_numeric(group.iloc[:, 10], errors='coerce').sum()
+        except: pkg_sum = 0
+        
+        # --- REVISED DESCRIPTION LOGIC ---
+        desc_list = group.iloc[:, 12].dropna().astype(str).str.strip().str.upper().unique()
+        desc_list = [d for d in desc_list if d and d != 'NAN']
+        
+        if len(desc_list) == 0: items_str = "GENERAL CARGO"
+        elif len(desc_list) == 1: items_str = desc_list[0]
+        else: items_str = ", ".join(desc_list[:-1]) + " & " + desc_list[-1]
+            
+        country_list = group.iloc[:, 13].dropna().astype(str).str.strip().str.upper().unique()
+        country_list = [c for c in country_list if c and c != 'NAN']
+        if len(country_list) == 0: country_str = "UNKNOWN"
+        elif len(country_list) == 1: country_str = country_list[0]
+        else: country_str = ", ".join(country_list[:-1]) + " AND " + country_list[-1]
+            
+        port_val = "UNKNOWN"
+        ports = group.iloc[:, 14].dropna().astype(str).str.strip().str.upper()
+        if not ports.empty: port_val = ports.iloc[0]
+            
+        final_desc = f"{items_str}.\n\nCARGO IN TRANSIT TO {country_str} VIA {port_val} / VIETNAM."
+
         stats.append({
             "Sheet Name": name,
             "Grouped By": g_type,
             "Containers": len(group),
-            "Total Weight": f"{w_sum:,.2f}"
+            "Total PKG": f"{pkg_sum:,.0f}",
+            "Total Weight": f"{w_sum:,.2f}",
+            "Description": final_desc
         })
     return pd.DataFrame(stats)
 
@@ -674,6 +702,13 @@ if uploaded_file:
                 try:
                     stats_df = generate_breakdown(df)
                     st.dataframe(stats_df, use_container_width=True)
+                    
+                    # --- NEW: COPY DESCRIPTION FEATURE ---
+                    st.markdown("### 📋 Copy Descriptions")
+                    for index, row in stats_df.iterrows():
+                        with st.expander(f"📌 Sheet: {row['Sheet Name']}"):
+                            st.code(row['Description'], language='text')
+                            
                 except: pass
 
                 st.markdown("---")
